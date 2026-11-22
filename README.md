@@ -2,6 +2,8 @@
 
 Herramienta accesible basada en pictogramas para que personas con dificultades de lenguaje expresen su imaginación y creen cuentos con IA. Reconstrucción independiente de la app publicada en Base44 (`imagia.base44.app`).
 
+**En producción:** https://imagia-tmrb.netlify.app
+
 **Stack:** Vite + React 18 + Tailwind · Supabase (login, base de datos y almacenamiento de imágenes) · Netlify (web estática + funciones serverless para la IA) · Gemini u OpenAI.
 
 ## Qué se conserva del original
