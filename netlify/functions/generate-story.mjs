@@ -38,7 +38,8 @@ IMPORTANT: Write the entire story (title and text) in ${LANGS[lang]}.`;
     result = await generateStoryJson(prompt);
   } catch (e) {
     console.error("generate-story", e);
-    return json(502, { error: "La IA no ha podido crear el cuento. Inténtalo de nuevo." });
+    // `detail` ayuda a diagnosticar (modelo inexistente, clave inválida, cuota...). No contiene la clave.
+    return json(502, { error: "La IA no ha podido crear el cuento. Inténtalo de nuevo.", detail: String(e.message).slice(0, 300) });
   }
 
   const { data, error } = await db

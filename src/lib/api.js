@@ -44,7 +44,11 @@ async function callFunction(name, body) {
     body: JSON.stringify(body ?? {}),
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || `Error ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(json.error || `Error ${res.status}`);
+    err.detail = json.detail;
+    throw err;
+  }
   return json;
 }
 

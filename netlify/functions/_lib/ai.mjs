@@ -15,10 +15,18 @@ const STORY_SCHEMA = {
   required: ["title", "story", "image_prompt"],
 };
 
+const GEMINI_SCHEMA = {
+  type: "OBJECT",
+  properties: Object.fromEntries(
+    Object.entries(STORY_SCHEMA.properties).map(([k, v]) => [k, { ...v, type: "STRING" }]),
+  ),
+  required: STORY_SCHEMA.required,
+};
+
 async function post(url, headers, body) {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error?.message || `AI provider error ${res.status}`);
+  if (!res.ok) throw new Error(`${res.status} ${data?.error?.status || ""} ${data?.error?.message || "AI provider error"}`.trim());
   return data;
 }
 
@@ -38,16 +46,17 @@ export async function generateStoryJson(prompt) {
     );
     return JSON.parse(data.choices[0].message.content);
   }
-  const model = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_TEXT_MODEL || "gemini-flash-latest";
   const data = await post(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     { "x-goog-api-key": process.env.GEMINI_API_KEY },
     {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json", responseSchema: STORY_SCHEMA },
+      generationConfig: { responseMimeType: "application/json", responseSchema: GEMINI_SCHEMA },
     },
   );
   const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+  if (!text) throw new Error(`Empty response (finishReason: ${data.candidates?.[0]?.finishReason || data.promptFeedback?.blockReason || "unknown"})`);
   return JSON.parse(text);
 }
 

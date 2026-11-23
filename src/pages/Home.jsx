@@ -37,7 +37,9 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ["stories-count"] });
       navigate(`/story/${id}`);
     } catch (e) {
-      setError(e.message || "No se pudo crear el cuento. Inténtalo de nuevo.");
+      setError(
+        (e.message || "No se pudo crear el cuento. Inténtalo de nuevo.") + (e.detail ? ` (${e.detail})` : ""),
+      );
     } finally {
       setGenerating(false);
     }
