@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { BookOpen, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import PictogramBanner from "./PictogramBanner";
 import ShareMenu from "./ShareMenu";
 
 export default function StoryCard({ story, onClick, onDelete }) {
@@ -17,9 +18,7 @@ export default function StoryCard({ story, onClick, onDelete }) {
             <img src={story.story_image_url} alt={story.title} loading="lazy" className="w-full h-full object-cover" />
           </div>
         ) : (
-          <div className="aspect-video w-full bg-muted flex items-center justify-center">
-            <BookOpen className="w-8 h-8 text-muted-foreground/40" />
-          </div>
+          <PictogramBanner sequence={seq} size="sm" />
         )}
         <div className="p-4 pb-2 space-y-2">
           <h3 className="font-heading font-semibold text-foreground line-clamp-1">{story.title || "Sin título"}</h3>

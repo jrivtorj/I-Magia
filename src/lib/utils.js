@@ -1,3 +1,6 @@
+/** Ilustraciones con IA: desactivadas salvo VITE_ENABLE_IMAGES=true (requiere facturación en Gemini/OpenAI). */
+export const IMAGES_ENABLED = import.meta.env.VITE_ENABLE_IMAGES === "true";
+
 export function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }

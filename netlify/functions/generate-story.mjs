@@ -53,7 +53,7 @@ IMPORTANT: Write the entire story (title and text) in ${LANGS[lang]}.`;
       generated_prompt: result.image_prompt, // se reutiliza en generate-image
       story_text: result.story,
       language: lang,
-      status: "illustrating",
+      status: process.env.VITE_ENABLE_IMAGES === "true" ? "illustrating" : "completed",
     })
     .select("id")
     .single();

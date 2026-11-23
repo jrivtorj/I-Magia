@@ -60,5 +60,6 @@ npx netlify dev        # web + funciones en http://localhost:8888
 Desde fuera no se pueden extraer los datos de Base44. En el panel de Base44, ve a **Data → Story** y exporta a CSV. Después se importan a la tabla `stories` con su `user_id` correspondiente. Las imágenes están alojadas en `media.base44.com`: conviene descargarlas y subirlas al bucket `story-images` antes de cerrar la app de Base44.
 
 ## Notas
+- **Ilustraciones desactivadas por defecto.** La clave gratuita de Gemini no permite generar imágenes (error 429). En su lugar, cada cuento muestra una cabecera con sus pictogramas. Para activarlas: activa la facturación del proveedor, añade `VITE_ENABLE_IMAGES=true` en Netlify y vuelve a desplegar.
 - Las funciones síncronas de Netlify tienen un tiempo límite (10 s por defecto). Si la ilustración tarda más, el cuento queda sin imagen. En ese caso tienes dos opciones: usar un modelo de imagen más rápido o desplegar en Vercel (60 s).
 - Los nombres de modelo son configurables (`GEMINI_TEXT_MODEL`, `GEMINI_IMAGE_MODEL`…), por si Google u OpenAI los renuevan.

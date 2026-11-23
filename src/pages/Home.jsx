@@ -6,7 +6,7 @@ import { BookOpen, WandSparkles } from "lucide-react";
 import PictogramPicker from "@/components/PictogramPicker";
 import SequenceBar, { MAX_PICTOGRAMS } from "@/components/SequenceBar";
 import { countAllStories, generateImage, generateStory } from "@/lib/api";
-import { getStoryLanguage, rememberImageError } from "@/lib/utils";
+import { IMAGES_ENABLED, getStoryLanguage, rememberImageError } from "@/lib/utils";
 
 export default function Home() {
   const [sequence, setSequence] = useState([]);
@@ -30,10 +30,11 @@ export default function Home() {
         getStoryLanguage(),
       );
       // La ilustración se genera en segundo plano; la vista del cuento se refresca sola.
-      generateImage(id)
-        .then((r) => r.reason && rememberImageError(id, r.reason))
-        .catch((e) => rememberImageError(id, e.message))
-        .finally(() => queryClient.invalidateQueries({ queryKey: ["story", id] }));
+      if (IMAGES_ENABLED)
+        generateImage(id)
+          .then((r) => r.reason && rememberImageError(id, r.reason))
+          .catch((e) => rememberImageError(id, e.message))
+          .finally(() => queryClient.invalidateQueries({ queryKey: ["story", id] }));
       queryClient.invalidateQueries({ queryKey: ["stories"] });
       queryClient.invalidateQueries({ queryKey: ["stories-count"] });
       navigate(`/story/${id}`);

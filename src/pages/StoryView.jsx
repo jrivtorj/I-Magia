@@ -10,7 +10,8 @@ import ShareMenu from "@/components/ShareMenu";
 import Spinner from "@/components/Spinner";
 import { generateImage, getStory } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { printStories, readImageError, rememberImageError } from "@/lib/utils";
+import { IMAGES_ENABLED, printStories, readImageError, rememberImageError } from "@/lib/utils";
+import PictogramBanner from "@/components/PictogramBanner";
 
 // Si la generación de imagen se cortó (p. ej. por tiempo límite), dejar de esperar a los 3 minutos.
 const isIllustrating = (s) =>
@@ -86,12 +87,14 @@ export default function StoryView() {
           <div className="aspect-video w-full overflow-hidden">
             <img src={story.story_image_url} alt={story.title} className="w-full h-full object-cover" />
           </div>
+        ) : !IMAGES_ENABLED ? (
+          <PictogramBanner sequence={story.pictogram_sequence} />
         ) : (
           <div className="aspect-video w-full bg-muted flex items-center justify-center">
             <div className="text-center space-y-2 text-muted-foreground">
               <ImageIcon className={`w-12 h-12 mx-auto opacity-40 ${illustrating ? "animate-pulse" : ""}`} />
               <p className="font-body text-sm">{illustrating ? "Generando ilustración..." : "Sin ilustración"}</p>
-              {!illustrating && imageError && (
+              {!illustrating && imageError && isOwner && (
                 <p className="font-body text-xs text-destructive/80 max-w-sm mx-auto px-4">{imageError}</p>
               )}
               {!illustrating && isOwner && (
