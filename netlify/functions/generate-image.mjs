@@ -8,11 +8,12 @@ export default async (req) => {
   if (!user) return json(401, { error: "No autorizado" });
 
   const { storyId } = await req.json().catch(() => ({}));
-  const { data: story } = await db.from("stories").select("id, user_id, generated_prompt, status").eq("id", storyId).single();
+  const { data: story } = await db.from("stories").select("id, user_id, generated_prompt, story_image_url").eq("id", storyId).single();
   if (!story || story.user_id !== user.id) return json(404, { error: "Cuento no encontrado" });
-  if (story.status !== "illustrating") return json(200, { ok: true });
+  if (story.story_image_url) return json(200, { ok: true, url: story.story_image_url });
 
   let url = null;
+  let reason = null;
   try {
     const { bytes, mimeType } = await generateImageBytes(story.generated_prompt);
     const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
@@ -23,7 +24,8 @@ export default async (req) => {
   } catch (e) {
     // Si falla la imagen, el cuento se conserva sin ilustración.
     console.error("generate-image", e);
+    reason = String(e.message || e).slice(0, 300);
   }
   await db.from("stories").update({ story_image_url: url, status: "completed" }).eq("id", story.id);
-  return json(200, { ok: true, url });
+  return json(200, { ok: Boolean(url), url, reason });
 };

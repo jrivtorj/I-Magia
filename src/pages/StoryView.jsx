@@ -1,15 +1,16 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, BookOpen, Image as ImageIcon, Printer } from "lucide-react";
+import { ArrowLeft, BookOpen, Image as ImageIcon, Printer, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReadAloud from "@/components/ReadAloud";
 import ShareMenu from "@/components/ShareMenu";
 import Spinner from "@/components/Spinner";
-import { getStory } from "@/lib/api";
+import { generateImage, getStory } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { printStories } from "@/lib/utils";
+import { printStories, readImageError, rememberImageError } from "@/lib/utils";
 
 // Si la generación de imagen se cortó (p. ej. por tiempo límite), dejar de esperar a los 3 minutos.
 const isIllustrating = (s) =>
@@ -19,6 +20,9 @@ export default function StoryView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const qc = useQueryClient();
+  const [retrying, setRetrying] = useState(false);
+  const [imageError, setImageError] = useState(() => readImageError(id));
   const { data: story, isLoading } = useQuery({
     queryKey: ["story", id],
     queryFn: () => getStory(id),
@@ -38,7 +42,25 @@ export default function StoryView() {
       </div>
     );
 
-  const illustrating = isIllustrating(story);
+  const illustrating = isIllustrating(story) || retrying;
+  const isOwner = user && story.user_id ? user.id === story.user_id : Boolean(user);
+
+  const retryImage = async () => {
+    setRetrying(true);
+    setImageError(null);
+    try {
+      const r = await generateImage(story.id);
+      if (r.reason) {
+        setImageError(r.reason);
+        rememberImageError(story.id, r.reason);
+      }
+    } catch (e) {
+      setImageError(e.message);
+    } finally {
+      setRetrying(false);
+      qc.invalidateQueries({ queryKey: ["story", id] });
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto space-y-6">
@@ -69,6 +91,14 @@ export default function StoryView() {
             <div className="text-center space-y-2 text-muted-foreground">
               <ImageIcon className={`w-12 h-12 mx-auto opacity-40 ${illustrating ? "animate-pulse" : ""}`} />
               <p className="font-body text-sm">{illustrating ? "Generando ilustración..." : "Sin ilustración"}</p>
+              {!illustrating && imageError && (
+                <p className="font-body text-xs text-destructive/80 max-w-sm mx-auto px-4">{imageError}</p>
+              )}
+              {!illustrating && isOwner && (
+                <Button variant="outline" size="sm" onClick={retryImage} className="rounded-xl font-body gap-2 mt-1">
+                  <RefreshCw className="w-3.5 h-3.5" /> Crear ilustración
+                </Button>
+              )}
             </div>
           </div>
         )}

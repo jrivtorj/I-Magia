@@ -70,3 +70,20 @@ img{width:100%;border-radius:12px;margin-bottom:24px}
   w.document.close();
   w.focus();
 }
+
+/** Guarda (solo en esta pestaña) por qué falló la ilustración de un cuento, para mostrarlo. */
+export function rememberImageError(storyId, reason) {
+  try {
+    sessionStorage.setItem(`img-error-${storyId}`, reason);
+  } catch {
+    /* sin almacenamiento */
+  }
+}
+
+export function readImageError(storyId) {
+  try {
+    return sessionStorage.getItem(`img-error-${storyId}`);
+  } catch {
+    return null;
+  }
+}
