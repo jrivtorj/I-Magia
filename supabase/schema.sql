@@ -21,6 +21,10 @@ create index if not exists stories_user_created_idx on public.stories (user_id, 
 
 alter table public.stories enable row level security;
 
+-- Los proyectos recientes de Supabase no conceden permisos automáticos sobre tablas nuevas.
+grant select, insert, update, delete on public.stories to service_role;
+grant select, insert, delete on public.stories to authenticated;
+
 -- Cada usuario solo ve, crea y borra SUS cuentos.
 drop policy if exists "stories_select_own" on public.stories;
 create policy "stories_select_own" on public.stories
