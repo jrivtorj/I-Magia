@@ -59,7 +59,10 @@ IMPORTANT: Write the entire story (title and text) in ${LANGS[lang]}.`;
     .single();
   if (error) {
     console.error("insert", error);
-    return json(500, { error: "No se pudo guardar el cuento" });
+    return json(500, {
+      error: "No se pudo guardar el cuento",
+      detail: [error.code, error.message, error.hint].filter(Boolean).join(" · ").slice(0, 300),
+    });
   }
   return json(200, { id: data.id });
 };
