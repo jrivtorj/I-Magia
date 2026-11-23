@@ -23,8 +23,9 @@ const GEMINI_SCHEMA = {
   required: STORY_SCHEMA.required,
 };
 
-async function post(url, headers, body) {
-  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
+async function post(url, headers, body, deadline) {
+  const signal = deadline ? AbortSignal.timeout(Math.max(1000, deadline - Date.now())) : undefined;
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body), signal });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`${res.status} ${data?.error?.status || ""} ${data?.error?.message || "AI provider error"}`.trim());
   return data;
@@ -46,18 +47,39 @@ export async function generateStoryJson(prompt) {
     );
     return JSON.parse(data.choices[0].message.content);
   }
-  const model = process.env.GEMINI_TEXT_MODEL || "gemini-flash-latest";
-  const data = await post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    { "x-goog-api-key": process.env.GEMINI_API_KEY },
-    {
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json", responseSchema: GEMINI_SCHEMA },
-    },
-  );
-  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
-  if (!text) throw new Error(`Empty response (finishReason: ${data.candidates?.[0]?.finishReason || data.promptFeedback?.blockReason || "unknown"})`);
-  return JSON.parse(text);
+  // Gemini devuelve 503/429 en picos de demanda: reintento corto y modelo de respaldo,
+  // sin pasar de ~9 s en total (límite de las funciones de Netlify).
+  const models = [
+    process.env.GEMINI_TEXT_MODEL || "gemini-flash-latest",
+    process.env.GEMINI_FALLBACK_MODEL || "gemini-flash-lite-latest",
+  ];
+  const deadline = Date.now() + 9000;
+  let lastError;
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2 && Date.now() < deadline; attempt++) {
+      try {
+        const data = await post(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          { "x-goog-api-key": process.env.GEMINI_API_KEY },
+          {
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json", responseSchema: GEMINI_SCHEMA },
+          },
+          deadline,
+        );
+        const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+        if (!text) throw new Error(`Empty response (finishReason: ${data.candidates?.[0]?.finishReason || data.promptFeedback?.blockReason || "unknown"})`);
+        return JSON.parse(text);
+      } catch (e) {
+        lastError = e;
+        if (!/^(429|500|503|504)\b|aborted|timeout/i.test(e.message)) throw e; // error no transitorio
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+  }
+  const err = new Error(lastError?.message || "AI unavailable");
+  err.busy = true;
+  throw err;
 }
 
 /** Devuelve { bytes: Buffer, mimeType } */

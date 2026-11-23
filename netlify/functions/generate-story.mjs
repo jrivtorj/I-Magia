@@ -39,6 +39,8 @@ IMPORTANT: Write the entire story (title and text) in ${LANGS[lang]}.`;
   } catch (e) {
     console.error("generate-story", e);
     // `detail` ayuda a diagnosticar (modelo inexistente, clave inválida, cuota...). No contiene la clave.
+    if (e.busy)
+      return json(503, { error: "La IA está muy ocupada en este momento. Espera un minuto y vuelve a intentarlo 🙏" });
     return json(502, { error: "La IA no ha podido crear el cuento. Inténtalo de nuevo.", detail: String(e.message).slice(0, 300) });
   }
 
