@@ -6,6 +6,8 @@ export default function RequireAuth() {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <Spinner label="Cargando I-magIA..." fullscreen />;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  // Conserva ?error=... (p. ej. fallo de OAuth) para mostrarlo en la pantalla de login
+  if (!user)
+    return <Navigate to={`/login${location.search}${location.hash}`} replace state={{ from: location.pathname }} />;
   return <Outlet />;
 }

@@ -24,6 +24,10 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
   const [error, setError] = useState("");
+  const authError = (() => {
+    const params = new URLSearchParams(location.search || location.hash.replace(/^#/, ""));
+    return params.get("error_description") || params.get("error");
+  })();
 
   if (user) return <Navigate to={location.state?.from || "/"} replace />;
 
@@ -97,6 +101,11 @@ export default function Login() {
               {status === "error" && <p className="text-xs text-destructive font-body text-center">{error}</p>}
             </form>
           </div>
+        )}
+        {authError && status !== "sent" && (
+          <p className="text-xs text-destructive font-body text-center bg-destructive/10 rounded-xl p-3">
+            No se pudo iniciar sesión: {authError}
+          </p>
         )}
         <p className="text-center font-body text-xs text-muted-foreground/50">Aula Digital Studio</p>
       </div>
