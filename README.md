@@ -17,7 +17,7 @@ Herramienta accesible basada en pictogramas para que personas con dificultades d
 
 | Base44 | Aquí | Motivo |
 |---|---|---|
-| `base44.auth` | Supabase Auth (enlace mágico por correo; Google opcional) | Login propio |
+| `base44.auth` | Supabase Auth: Google (principal) y enlace por correo | Login propio |
 | `entities.Story` | Tabla `stories` en Postgres con RLS | Cada usuario solo ve y borra lo suyo |
 | `Core.InvokeLLM` | `netlify/functions/generate-story` | La clave de IA nunca llega al navegador |
 | `Core.GenerateImage` | `netlify/functions/generate-image` → Supabase Storage | Se separa del texto para no superar el tiempo límite de las funciones |
